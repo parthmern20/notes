@@ -1,4 +1,4 @@
-import OpenAI from "openai"
+import { generateText } from "ai"
 
 export interface PracticeQuestion {
   question: string
@@ -13,10 +13,6 @@ export interface AIGeneratedContent {
   practiceQuestions: PracticeQuestion[]
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
 export async function generateSummaryAndQuestions(
   noteTitle: string,
   noteContent: string,
@@ -24,34 +20,22 @@ export async function generateSummaryAndQuestions(
   try {
     console.log("[v0] Starting AI generation for note:", noteTitle)
 
-    // Generate summary
-    const summaryResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert educational content summarizer. Create a concise, clear summary of the provided lecture notes in a bullet point format.",
-        },
-        {
-          role: "user",
-          content: `Please summarize these lecture notes:\n\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`,
-        },
-      ],
+    // Generate summary using Vercel AI Gateway
+    const { text: summary } = await generateText({
+      model: "openai/gpt-4-turbo",
+      system:
+        "You are an expert educational content summarizer. Create a concise, clear summary of the provided lecture notes in bullet points.",
+      prompt: `Please summarize these lecture notes:\n\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`,
       temperature: 0.7,
-      max_tokens: 500,
+      maxTokens: 500,
     })
 
-    const summary = summaryResponse.choices[0]?.message?.content || ""
     console.log("[v0] Generated summary")
 
     // Generate practice questions for AWS Cloud Practitioner exam
-    const questionsResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are an AWS Cloud Practitioner exam expert. Generate 4 multiple-choice questions based on the provided content. 
+    const { text: questionsText } = await generateText({
+      model: "openai/gpt-4-turbo",
+      system: `You are an AWS Cloud Practitioner exam expert. Generate 4 multiple-choice questions based on the provided content. 
 For each question, include:
 - question: The question text
 - options: Array of 4 answer options
@@ -69,23 +53,17 @@ Return ONLY valid JSON in this format:
     "explanation": "..."
   }
 ]`,
-        },
-        {
-          role: "user",
-          content: `Generate AWS Cloud Practitioner practice questions from these notes:\n\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`,
-        },
-      ],
+      prompt: `Generate AWS Cloud Practitioner practice questions from these notes:\n\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`,
       temperature: 0.8,
-      max_tokens: 1500,
+      maxTokens: 1500,
     })
 
     let practiceQuestions: PracticeQuestion[] = []
-    const questionsContent = questionsResponse.choices[0]?.message?.content || "[]"
 
     try {
       // Extract JSON from response (in case there's extra text)
-      const jsonMatch = questionsContent.match(/\[[\s\S]*\]/)
-      const jsonStr = jsonMatch ? jsonMatch[0] : questionsContent
+      const jsonMatch = questionsText.match(/\[[\s\S]*\]/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : questionsText
       practiceQuestions = JSON.parse(jsonStr)
     } catch (parseError) {
       console.error("[v0] Failed to parse questions JSON:", parseError)

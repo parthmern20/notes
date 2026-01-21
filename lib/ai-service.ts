@@ -1,4 +1,5 @@
 import { generateText } from "ai"
+import { anthropic } from "@ai-sdk/anthropic"
 
 export interface PracticeQuestion {
   question: string
@@ -20,9 +21,9 @@ export async function generateSummaryAndQuestions(
   try {
     console.log("[v0] Starting AI generation for note:", noteTitle)
 
-    // Generate summary using Vercel AI Gateway
+    // Generate summary using Claude
     const { text: summary } = await generateText({
-      model: "xai/grok-4",
+      model: anthropic("claude-sonnet-4-20250514"), // or "claude-opus-4-20251101" for higher quality
       system:
         "You are an expert educational content summarizer. Create a concise, clear summary of the provided lecture notes in bullet points.",
       prompt: `Please summarize these lecture notes:\n\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`,
@@ -32,9 +33,9 @@ export async function generateSummaryAndQuestions(
 
     console.log("[v0] Generated summary")
 
-    // Generate practice questions for AWS Cloud Practitioner exam
+    // Generate practice questions for AWS Cloud Practitioner exam using Claude
     const { text: questionsText } = await generateText({
-      model: "openai/gpt-4-turbo",
+      model: anthropic("claude-sonnet-4-20250514"),
       system: `You are an AWS Cloud Practitioner exam expert. Generate 4 multiple-choice questions based on the provided content. 
 For each question, include:
 - question: The question text

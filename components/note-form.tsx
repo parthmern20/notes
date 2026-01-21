@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { graphqlClient, CREATE_NOTE, UPDATE_NOTE } from "@/lib/graphql/client"
+import { graphqlClient, CREATE_NOTE, UPDATE_NOTE, GENERATE_AI_CONTENT } from "@/lib/graphql/client"
 import type { LectureNote, CreateNoteInput, UpdateNoteInput } from "@/types/lecture-note"
-import { Loader2 } from "lucide-react"
+import { Loader2, Sparkles } from "lucide-react"
 
 interface NoteFormProps {
   note?: LectureNote
@@ -21,6 +21,7 @@ interface NoteFormProps {
 export function NoteForm({ note, mode }: NoteFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
@@ -29,6 +30,25 @@ export function NoteForm({ note, mode }: NoteFormProps) {
     content: note?.content || "",
     sequence: note?.sequence || 1,
   })
+
+  const handleGenerateAI = async () => {
+    if (!note) return
+    setIsGeneratingAI(true)
+    setError(null)
+
+    try {
+      console.log("[v0] Starting AI generation for note:", note.id)
+      const result = await graphqlClient<{ generateAIContent: LectureNote }>(GENERATE_AI_CONTENT, {
+        id: note.id,
+      })
+      console.log("[v0] AI generation completed")
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate AI content")
+    } finally {
+      setIsGeneratingAI(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,11 +150,24 @@ export function NoteForm({ note, mode }: NoteFormProps) {
           </div>
 
           <div className="flex gap-3">
-            <Button type="submit" disabled={isLoading} className="flex-1">
+            <Button type="submit" disabled={isLoading || isGeneratingAI} className="flex-1">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {mode === "create" ? "Create Note" : "Save Changes"}
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+            {mode === "edit" && note && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleGenerateAI}
+                disabled={isLoading || isGeneratingAI}
+                className="flex-1"
+              >
+                {isGeneratingAI && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {!isGeneratingAI && <Sparkles className="mr-2 h-4 w-4" />}
+                Generate AI Content
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading || isGeneratingAI}>
               Cancel
             </Button>
           </div>

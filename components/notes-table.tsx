@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Eye, Pencil, Trash2, Loader2 } from "lucide-react"
+import { Eye, Pencil, Trash2, Loader2, Sparkles } from "lucide-react"
 import { graphqlClient, DELETE_NOTE } from "@/lib/graphql/client"
 import type { LectureNote } from "@/types/lecture-note"
 
@@ -83,6 +83,7 @@ export function NotesTable({ notes, onRefresh }: NotesTableProps) {
                   <TableRow>
                     <TableHead className="w-16">Seq</TableHead>
                     <TableHead>Note Title</TableHead>
+                    <TableHead className="hidden w-12 md:table-cell">AI</TableHead>
                     <TableHead className="hidden md:table-cell">Updated</TableHead>
                     <TableHead className="w-32 text-right">Actions</TableHead>
                   </TableRow>
@@ -92,6 +93,13 @@ export function NotesTable({ notes, onRefresh }: NotesTableProps) {
                     <TableRow key={note.id}>
                       <TableCell className="font-mono text-muted-foreground">{note.sequence}</TableCell>
                       <TableCell className="font-medium">{note.noteTitle}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {note.summary && note.practiceQuestions && note.practiceQuestions.length > 0 ? (
+                          <Sparkles className="h-4 w-4 text-yellow-500" title="AI-generated content" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="hidden text-muted-foreground md:table-cell">
                         {new Date(note.updatedAt).toLocaleDateString()}
                       </TableCell>

@@ -33,6 +33,14 @@ export const GET_ALL_NOTES = `
       noteTitle
       content
       sequence
+      summary
+      practiceQuestions {
+        question
+        options
+        correctAnswer
+        difficulty
+        explanation
+      }
       createdAt
       updatedAt
     }
@@ -47,6 +55,14 @@ export const GET_NOTES_BY_LECTURE = `
       noteTitle
       content
       sequence
+      summary
+      practiceQuestions {
+        question
+        options
+        correctAnswer
+        difficulty
+        explanation
+      }
       createdAt
       updatedAt
     }
@@ -61,6 +77,14 @@ export const GET_NOTE_BY_ID = `
       noteTitle
       content
       sequence
+      summary
+      practiceQuestions {
+        question
+        options
+        correctAnswer
+        difficulty
+        explanation
+      }
       createdAt
       updatedAt
     }
@@ -82,6 +106,14 @@ export const CREATE_NOTE = `
       noteTitle
       content
       sequence
+      summary
+      practiceQuestions {
+        question
+        options
+        correctAnswer
+        difficulty
+        explanation
+      }
       createdAt
       updatedAt
     }
@@ -96,6 +128,14 @@ export const UPDATE_NOTE = `
       noteTitle
       content
       sequence
+      summary
+      practiceQuestions {
+        question
+        options
+        correctAnswer
+        difficulty
+        explanation
+      }
       createdAt
       updatedAt
     }
@@ -105,5 +145,27 @@ export const UPDATE_NOTE = `
 export const DELETE_NOTE = `
   mutation DeleteNote($id: ID!) {
     deleteNote(id: $id)
+  }
+`
+
+export const GENERATE_AI_CONTENT = `
+  mutation GenerateAIContent($id: ID!) {
+    generateAIContent(id: $id) {
+      id
+      lectureTitle
+      noteTitle
+      content
+      sequence
+      summary
+      practiceQuestions {
+        question
+        options
+        correctAnswer
+        difficulty
+        explanation
+      }
+      createdAt
+      updatedAt
+    }
   }
 `

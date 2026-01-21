@@ -36,7 +36,7 @@ export async function generateSummaryAndQuestions(
     // Generate practice questions for AWS Cloud Practitioner exam using Claude
     const { text: questionsText } = await generateText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: `You are an AWS Cloud Practitioner exam expert. Generate 4 multiple-choice questions based on the provided content. 
+      system: `You are an AWS Cloud Practitioner exam expert. Generate 4 to 8 multiple-choice questions based on the provided content. 
 For each question, include:
 - question: The question text
 - options: Array of 4 answer options

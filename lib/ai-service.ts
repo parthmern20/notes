@@ -22,7 +22,7 @@ export async function generateSummaryAndQuestions(
 
     // Generate summary using Vercel AI Gateway
     const { text: summary } = await generateText({
-      model: "openai/gpt-4-turbo",
+      model: "xai/grok-4",
       system:
         "You are an expert educational content summarizer. Create a concise, clear summary of the provided lecture notes in bullet points.",
       prompt: `Please summarize these lecture notes:\n\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`,

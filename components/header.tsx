@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookOpen, Plus, List, FileText } from "lucide-react"
+import { BookOpen, Plus, List, FileText, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/notes/add", label: "Add Note", icon: Plus },
   { href: "/notes", label: "All Notes", icon: List },
   { href: "/notes/read", label: "Read All", icon: FileText },
+  { href: "/summaries", label: "Summaries", icon: Download },
 ]
 
 export function Header() {

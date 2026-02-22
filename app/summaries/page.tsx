@@ -20,10 +20,20 @@ export default function SummariesPage() {
   )
 
   const [isExporting, setIsExporting] = useState(false)
+  const [showQuestions, setShowQuestions] = useState(false)
+
+  const [selectedLecture, setSelectedLecture] = useState<string | null>(null)
 
   const notes = data?.getAllNotes || []
   const notesWithSummaries = notes.filter((note) => note.summary)
 
+  const filteredNotes = selectedLecture
+    ? notesWithSummaries.filter((note) => note.lectureTitle === selectedLecture)
+    : notesWithSummaries
+
+  // Get unique lecture titles
+  const lectureTitles = Array.from(new Set(notesWithSummaries.map((note) => note.lectureTitle))).sort()
+  
   const exportToPDF = () => {
     setIsExporting(true)
     // Small delay to update button state before print dialog
@@ -36,22 +46,57 @@ export default function SummariesPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between print:hidden">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Lecture Summaries</h1>
-            <p className="mt-2 text-muted-foreground">
-              View and export all AI-generated summaries from your lecture notes.
-            </p>
+       <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Lecture Summaries</h1>
+              <p className="mt-2 text-muted-foreground">
+                View and export all AI-generated summaries from your lecture notes.
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowQuestions(!showQuestions)}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              {showQuestions ? "Hide Questions" : "Show Questions"}
+            </Button>
+            <Button
+              onClick={exportToPDF}
+              disabled={isExporting || filteredNotes.length === 0}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {isExporting ? "Exporting..." : "Export as PDF"}
+            </Button>
           </div>
-          <Button
-            onClick={exportToPDF}
-            disabled={isExporting || notesWithSummaries.length === 0}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {isExporting ? "Preparing..." : "Export as PDF"}
-          </Button>
+
+          {lectureTitles.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium">Filter by Lecture:</span>
+              <Button
+                variant={selectedLecture === null ? "default" : "outline"}
+                onClick={() => setSelectedLecture(null)}
+                className="text-sm"
+              >
+                All Lectures ({notesWithSummaries.length})
+              </Button>
+              {lectureTitles.map((lecture) => {
+                const count = notesWithSummaries.filter((n) => n.lectureTitle === lecture).length
+                return (
+                  <Button
+                    key={lecture}
+                    variant={selectedLecture === lecture ? "default" : "outline"}
+                    onClick={() => setSelectedLecture(lecture)}
+                    className="text-sm"
+                  >
+                    {lecture} ({count})
+                  </Button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {isLoading ? (
@@ -70,53 +115,62 @@ export default function SummariesPage() {
               </p>
             </CardContent>
           </Card>
+        ) : filteredNotes.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
+              <h3 className="text-lg font-semibold">No Summaries in Selected Lecture</h3>
+              <p className="mt-2 text-center text-muted-foreground">
+                Try selecting a different lecture or create more summaries.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="space-y-6 print:space-y-4">
-            {notesWithSummaries.map((note, index) => (
-              <Card key={note.id} className="overflow-hidden break-inside-avoid">
-                <CardHeader className="bg-muted/50 print:bg-gray-100">
+          <div id="summaries-content" className="space-y-6">
+            {filteredNotes.map((note, index) => (
+              <Card key={note.id} className="overflow-hidden">
+                <CardHeader className="bg-muted/50">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground print:bg-black print:text-white">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                           {index + 1}
                         </span>
                         <div>
                           <CardTitle className="text-xl">{note.lectureTitle}</CardTitle>
-                          <CardDescription className="mt-1 print:text-gray-600">
-                            {note.noteTitle}
-                          </CardDescription>
+                          <CardDescription className="mt-1">{note.noteTitle}</CardDescription>
                         </div>
                       </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="prose prose-sm max-w-none dark:prose-invert print:prose-print">
-                    <div className="whitespace-pre-wrap leading-relaxed text-foreground print:text-black">
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div className="whitespace-pre-wrap text-foreground leading-relaxed">
                       {note.summary}
                     </div>
                   </div>
-                  {note.practiceQuestions && note.practiceQuestions.length > 0 && (
+
+                  {showQuestions && note.practiceQuestions && note.practiceQuestions.length > 0 && (
                     <div className="mt-6 border-t pt-6">
                       <h4 className="mb-4 font-semibold">Practice Questions</h4>
                       <div className="space-y-4">
                         {note.practiceQuestions.map((question, qIndex) => (
-                          <div key={qIndex} className="rounded-lg bg-muted/50 p-4 print:border print:border-gray-300 print:bg-gray-50">
+                          <div key={qIndex} className="rounded-lg bg-muted/50 p-4">
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
-                                <p className="font-medium print:text-black">
+                                <p className="font-medium">
                                   Q{qIndex + 1}: {question.question}
                                 </p>
                                 <div className="mt-3 space-y-2">
                                   {question.options.map((option, oIndex) => (
-                                    <div key={oIndex} className="text-sm print:text-black">
-                                      <span className="rounded bg-muted px-2 py-1 font-mono print:bg-gray-200">
+                                    <div key={oIndex} className="text-sm">
+                                      <span className="rounded bg-muted px-2 py-1 font-mono">
                                         {String.fromCharCode(65 + oIndex)}.
                                       </span>
                                       <span className="ml-2">{option}</span>
                                       {option === question.correctAnswer && (
-                                        <span className="ml-2 text-xs font-semibold text-green-600 print:text-green-800">
+                                        <span className="ml-2 text-xs font-semibold text-green-600 dark:text-green-400">
                                           ✓ Correct
                                         </span>
                                       )}
@@ -124,11 +178,11 @@ export default function SummariesPage() {
                                   ))}
                                 </div>
                               </div>
-                              <div className="rounded bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 print:border print:border-yellow-600">
+                              <div className="rounded bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
                                 {question.difficulty}
                               </div>
                             </div>
-                            <div className="mt-3 border-t pt-3 text-xs text-muted-foreground print:text-gray-700">
+                            <div className="mt-3 border-t pt-3 text-xs text-muted-foreground">
                               <p className="font-semibold">Explanation:</p>
                               <p className="mt-1">{question.explanation}</p>
                             </div>
